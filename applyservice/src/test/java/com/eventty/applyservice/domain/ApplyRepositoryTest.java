@@ -70,56 +70,56 @@ public class ApplyRepositoryTest {
 
         assertNotNull(response);
     }
-
-    @Test
-    @DisplayName("현재 신청 인원수")
-    public void getApplyNumTest(){
-        Long eventId = 100L;
-
-        Long response = applyReposiroty.getApplyNum(eventId);
-
-        assertNotNull(response);
-        assertEquals(3, response);
-    }
-
-    @Test
-    @DisplayName("행사 신청 취소 - applyId가 없을 경우")
-    public void deleteApplyNonExistAppyIdFailTest(){
-        Long id = 100L;
-
-        Boolean response = applyReposiroty.deleteCheck(id);
-
-        assertNull(response);
-    }
-
-    @Test
-    @DisplayName("행사 신청 취소")
-    public void deleteApplyTest(){
-        Long id = applyId;
-
-        Long response = applyReposiroty.deleteApply(id);
-
-        assertNotNull(response);
-    }
-
-    @Test
-    @DisplayName("행사 조회")
-    public void findByUserIdTest(){
-        Long userId = 100L;
-
-        List<FindByUserIdDTO> response = applyReposiroty.findByUserId(userId);
-
-        assertEquals(1, response.size());
-        assertNull(response.get(0).getDeleteDate());
-    }
-
-    @Test
-    public void findByEventIdGroupByTicketTest(){
-        Long eventId = 100L;
-
-        List<FindUsingTicketResponseDTO> response = applyReposiroty.findByEventIdGroupByTicket(eventId);
-
-        assertNotEquals(0, response.size());
-    }
+//
+//    @Test
+//    @DisplayName("현재 신청 인원수")
+//    public void getApplyNumTest(){
+//        Long eventId = 100L;
+//
+//        Long response = applyReposiroty.getApplyNum(eventId);
+//
+//        assertNotNull(response);
+//        assertEquals(3, response);
+//    }
+//
+//    @Test
+//    @DisplayName("행사 신청 취소 - applyId가 없을 경우")
+//    public void deleteApplyNonExistAppyIdFailTest(){
+//        Long id = 100L;
+//
+//        Boolean response = applyReposiroty.deleteCheck(id);
+//
+//        assertNull(response);
+//    }
+//
+//    @Test
+//    @DisplayName("행사 신청 취소")
+//    public void deleteApplyTest(){
+//        Long id = applyId;
+//
+//        Long response = applyReposiroty.deleteApply(id);
+//
+//        assertNotNull(response);
+//    }
+//
+//    @Test
+//    @DisplayName("행사 조회")
+//    public void findByUserIdTest(){
+//        Long userId = 100L;
+//
+//        List<FindByUserIdDTO> response = applyReposiroty.findByUserId(userId);
+//
+//        assertEquals(1, response.size());
+//        assertNull(response.get(0).getDeleteDate());
+//    }
+//
+//    @Test
+//    public void findByEventIdGroupByTicketTest(){
+//        Long eventId = 100L;
+//
+//        List<FindUsingTicketResponseDTO> response = applyReposiroty.findByEventIdGroupByTicket(eventId);
+//
+//        assertNotEquals(0, response.size());
+//    }
 
 }

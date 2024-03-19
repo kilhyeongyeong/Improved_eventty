@@ -16,8 +16,8 @@
     <!--  행사 신청  -->
     <insert id="insertApply" parameterType="com.eventty.applyservice.application.dto.CreateApplyDTO">
         INSERT INTO
-            apply(user_id, event_id, ticket_id, applicant_num, phone, name)
-        VALUES(#{userId}, #{eventId}, #{ticketId}, #{applicantNum}, #{phone}, #{name})
+            apply(id, user_id, event_id, ticket_id, applicant_num, phone, name)
+        VALUES(apply_seq.nextval, #{userId}, #{eventId}, #{ticketId}, #{applicantNum}, #{phone}, #{name})
     </insert>
 
     <update id="deleteApply" parameterType="Long">

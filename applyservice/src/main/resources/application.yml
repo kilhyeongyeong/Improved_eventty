@@ -1,12 +1,8 @@
-# Server
-server:
-  port: 8003
-
 spring:
   # Secret
   profiles:
-    active: dev
-  # Mysql
+    active: test
+  # Oracle
   datasource:
     url: ${url}
     username: ${adminname}
