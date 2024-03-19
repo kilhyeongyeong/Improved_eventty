@@ -14,9 +14,9 @@ public interface ApplyService {
 
     public void cancelApply(Long applyId);
 
-    public List<FindAppicaionListResponseDTO> findApplicationList(Long userId);
+    public List<FindAppicaionListResponseDTO> getApplicationList(Long userId);
 
-    public List<FindUsingTicketResponseDTO> getUsingTicketList(Long eventId);
+    public List<FindUsingTicketResponseDTO> getCurrentNumberOfApplicantsByTicket(Long eventId);
 
-    public List<FindApplicantsListResposneDTO> findApplicantsList(FindApplicantsListRequestDTO findApplicantsListRequestDTO);
+    public List<FindApplicantsListResposneDTO> getApplicantsListByEvent(FindApplicantsListRequestDTO findApplicantsListRequestDTO);
 }
