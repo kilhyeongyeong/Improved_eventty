@@ -1,0 +1,43 @@
+# Server
+server:
+  port: 8003
+
+spring:
+  # Secret
+  profiles:
+    active: dev
+  # Mysql
+  datasource:
+    url: ${url}
+    username: ${adminname}
+    password: ${password}
+    driver-class-name: ${driver-class-name}
+  # 404 Error
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+# mybatis
+mybatis:
+  mapper-locations: classpath:mybatis/mapper/**/**.xml
+
+# mybatis log - add log4jdbc.log4j2.yml and revise application-db.yml
+logging:
+  level:
+    com:
+      zaxxer:
+        hikari: INFO
+    javax:
+      sql:
+        DataSource: OFF
+    jdbc:
+      sqlonly: OFF
+      sqltiming: INFO
+      resultsettable: INFO
+      audit: OFF
+      resultset: OFF
+      connection: OFF
+    root: INFO
+    com.evnetty.applyService: ${level}

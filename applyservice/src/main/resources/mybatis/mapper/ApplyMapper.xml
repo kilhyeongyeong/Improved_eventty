@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eventty.applyservice.domain.ApplyReposiroty">
+    <!--  현재 신청 인원수 체크  -->
+    <select id="getApplyNum" parameterType="Long" resultType="Long">
+        <!-- Current Apply Num -->
+        SELECT SUM(applicant_num)
+          FROM apply
+         WHERE 1=1
+           AND event_id = #{eventId}
+           AND delete_date IS NULL;
+    </select>
+
+    <!--  행사 신청  -->
+    <insert id="insertApply" parameterType="com.eventty.applyservice.application.dto.CreateApplyDTO">
+        INSERT INTO
+            apply(user_id, event_id, ticket_id, applicant_num, phone, name)
+        VALUES(#{userId}, #{eventId}, #{ticketId}, #{applicantNum}, #{phone}, #{name})
+    </insert>
+
+    <update id="deleteApply" parameterType="Long">
+        UPDATE apply
+           SET DELETE_DATE = NOW()
+         WHERE id = #{applyId}
+    </update>
+
+    <select id="deleteCheck" parameterType="Long" resultType="Boolean">
+        SELECT
+            CASE
+                WHEN delete_date IS NULL THEN TRUE
+                ELSE FALSE
+            END AS result
+          FROM apply
+         WHERE id = #{applyId}
+    </select>
+
+    <select id="findByUserId" parameterType="Long" resultType="com.eventty.applyservice.application.dto.FindByUserIdDTO">
+        SELECT
+            id              AS applyId,
+            event_id        AS eventId,
+            ticket_id       AS ticketId,
+            applicant_num   AS applicantNum,
+            phone,
+            apply_date      AS applyDate,
+            delete_date     AS deleteDate,
+            CASE
+                WHEN apply_date > delete_date THEN apply_date
+                ELSE delete_date
+            END             AS recentDate
+          FROM apply
+         WHERE user_id = #{userId}
+         ORDER BY recentDate DESC
+    </select>
+
+    <select id="findByEventIdGroupByTicket" parameterType="Long" resultType="com.eventty.applyservice.application.dto.response.FindUsingTicketResponseDTO">
+        SELECT
+            ticket_id AS ticketId,
+            SUM(applicant_num) as appliedTicketCount
+          FROM apply
+         WHERE 1=1
+           AND event_id = #{eventId}
+           AND delete_date IS NULL
+         GROUP BY ticket_id
+    </select>
+
+    <select id="findByEventId"
+            parameterType="com.eventty.applyservice.application.dto.request.FindApplicantsListRequestDTO"
+            resultType="com.eventty.applyservice.application.dto.FindApplicantsListDTO">
+        SELECT
+            user_id AS userId,
+            a.id AS applyId,
+            phone,
+            name,
+            applicant_num AS applicantNum,
+            ticket_id AS ticketId,
+            delete_date AS deleteDate,
+            ad.date,
+            CASE
+                WHEN delete_date IS NULL THEN '결제 완료'
+                ELSE '예약 취소'
+            END AS state
+          FROM apply a
+         INNER JOIN (SELECT
+                        id,
+                        CASE
+                            WHEN delete_date IS NULL THEN apply_date
+                            ELSE delete_date
+                        END AS date
+                      FROM apply) AS ad
+           ON ad.id = a.id
+        WHERE 1=1
+            AND event_id = #{eventId}
+        <choose>
+            <when test="state != null and state == 1">
+                AND delete_date IS NULL
+            </when>
+            <when test="state != null and state == 2">
+                AND delete_date IS NOT NULL
+            </when>
+        </choose>
+        <if test='applyId != null and !"".equals(applyId)'>
+            AND a.id = #{applyId, jdbcType=NULL}
+        </if>
+        <if test='phone != null and !"".equals(phone)'>
+            AND a.phone LIKE CONCAT('%', #{phone, jdbcType=NULL}, '%')
+        </if>
+        <if test='name != null and !"".equals(name)'>
+            AND a.name LIKE CONCAT('%', #{name, jdbcType=NULL}, '%')
+        </if>
+        <choose>
+            <when test="dateMin != null and dateMax != null">
+                AND ad.date BETWEEN DATE(#{dateMin}) AND DATE(#{dateMax})
+            </when>
+            <when test="dateMin != null">
+                AND ad.date <![CDATA[>=]]> DATE(#{dateMin})
+            </when>
+            <when test="dateMax != null">
+                AND ad.date <![CDATA[<=]]> DATE(#{dateMax})
+            </when>
+        </choose>
+        <choose>
+            <when test="order != null and 0 == order">
+                ORDER BY a.id DESC
+            </when>
+            <when test="order != null and 1 == order">
+                ORDER BY ad.date
+            </when>
+        </choose>
+    </select>
+    <select id="countTestCode" resultType="Long">
+        select count(*) from apply where user_id = 1000
+    </select>
+</mapper>

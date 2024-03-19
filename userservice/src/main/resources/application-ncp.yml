@@ -1,0 +1,7 @@
+ncp:
+  endPoint: https://kr.object.ncloudstorage.com
+  regionName: kr-standard
+  accessKey: SmBO4gkZDj7DLJo2qMa5
+  secretKey: Xfww4nsnca2J5SgzwVKl4oW74riRr0iploL7bXRl
+  bucketName: eventty
+  folderName: user/

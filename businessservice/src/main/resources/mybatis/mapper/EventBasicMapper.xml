@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eventty.businessservice.event.domain.repository.EventBasicRepository">
+
+    <resultMap id="EventResultMap" type="com.eventty.businessservice.event.domain.entity.EventBasicEntity">
+        <id property="id" column="id"/>
+        <result property="hostId" column="host_id"/>
+        <result property="title" column="title"/>
+        <result property="eventStartAt" column="event_start_at"/>
+        <result property="eventEndAt" column="event_end_at"/>
+        <result property="participateNum" column="participate_num"/>
+        <result property="location" column="location"/>
+        <result property="category" column="category"/>
+        <result property="isActive" column="is_active"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <!--특정 이벤트 조회-->
+    <select id="selectEventById" resultMap="EventResultMap" parameterType="java.lang.Long">
+        SELECT * FROM event_basic
+        WHERE id = #{id} AND is_deleted = false
+    </select>
+
+    <!--특정 이벤트 조회 (열려 있는 행사만 조회)-->
+    <select id="selectActiveEventById" resultMap="EventResultMap" parameterType="java.lang.Long">
+        SELECT * FROM event_basic
+        WHERE id = #{id} AND is_deleted = false AND is_active = true
+    </select>
+
+    <!--전체 이벤트 조회-->
+    <select id="selectAllEvents" resultMap="EventResultMap" parameterType="java.lang.Long">
+        SELECT * FROM event_basic
+        WHERE is_deleted = false
+        ORDER BY event_start_at ASC
+    </select>
+
+    <!-- 호스트가 주최한 이벤트 조회 -->
+    <select id="selectEventsByHostId" resultMap="EventResultMap" parameterType="java.lang.Long">
+        SELECT *
+        FROM event_basic
+        WHERE host_id = #{hostId}
+        AND is_deleted = false
+    </select>
+
+    <!-- 이벤트 ID List 에 따른 이벤트 조회 (Top10 목록 조회시 사용) -->
+    <select id="selectEventsByIdList" resultMap="EventResultMap" parameterType="java.util.List">
+        SELECT *
+        FROM event_basic
+        WHERE id IN
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND is_active = true AND is_deleted = false
+        ORDER BY FIELD(id,
+        <foreach collection="list" item="id" open="" separator="," close="">
+            #{id}
+        </foreach>)
+    </select>
+
+    <!--카테고리 별 이벤트 조회-->
+    <select id="selectEventsByCategory" resultMap="EventResultMap" parameterType="java.lang.Long">
+        SELECT *
+        FROM event_basic e
+            INNER JOIN categories c ON e.category = c.id
+        WHERE c.id = #{categoryId}
+            AND is_deleted = false
+    </select>
+
+    <!--이벤트 검색-->
+    <select id="selectEventsBySearch" resultMap="EventResultMap" parameterType="java.lang.String">
+        SELECT *
+        FROM event_basic
+        WHERE title LIKE CONCAT('%', #{search}, '%')
+          AND is_deleted = false
+        ORDER BY event_start_at DESC
+    </select>
+
+    <!-- 이벤트 생성 -->
+    <insert id="insertEvent" parameterType="com.eventty.businessservice.event.domain.entity.EventBasicEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO
+            event_basic (host_id, title, event_start_at, event_end_at, participate_num, location, category, is_active, is_deleted)
+        VALUES (#{hostId}, #{title}, #{eventStartAt}, #{eventEndAt}, #{participateNum}, #{location}, #{category}, #{isActive}, #{isDeleted})
+    </insert>
+
+    <!-- 이벤트 수정 -->
+    <update id="updateEvent" parameterType="com.eventty.businessservice.event.domain.entity.EventBasicEntity">
+        UPDATE event_basic
+        SET
+            title = #{title},
+            event_start_at = #{eventStartAt},
+            event_end_at = #{eventEndAt},
+            participate_num = #{participateNum},
+            location = #{location},
+            category = #{category},
+            is_active = #{isActive}
+        WHERE id = #{id}
+    </update>
+
+    <!--이벤트 삭제-->
+    <update id="deleteEvent" parameterType="java.lang.Long" useGeneratedKeys="true" keyColumn="id">
+        UPDATE event_basic
+        SET is_deleted = true
+        WHERE id = #{id}
+    </update>
+
+</mapper>

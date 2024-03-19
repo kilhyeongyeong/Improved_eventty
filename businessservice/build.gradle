@@ -1,0 +1,62 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.1.2'
+	id 'io.spring.dependency-management' version '1.1.2'
+}
+
+group = 'com.eventty'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// web, validation
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// dev tools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+	// mybatis
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.2'
+
+	// 테스트 코드 작성시 사용할 DB(H2)
+	runtimeOnly 'com.h2database:h2'
+	// 개발 환경에서 사용하는 DB(MySQL)
+	runtimeOnly 'com.mysql:mysql-connector-j:8.0.32'
+
+	// ImageStorage
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.550'
+
+	// lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// JACKSON
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation("jakarta.json:jakarta.json-api:2.0.1")
+
+	// test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation("org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.2")
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

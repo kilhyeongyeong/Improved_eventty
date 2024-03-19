@@ -1,0 +1,44 @@
+# Server
+server:
+  port: 8000
+
+spring:
+  # Secret
+  profiles:
+    active: dev
+
+  # Mysql
+  datasource:
+    url: ${url}
+    username: ${adminname}
+    password: ${password}
+    driver-class-name: ${driver-class-name}
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true         # All Sql show
+        format_sql: true       # sql pretty show
+        use_sql_comments: true # /* */ within the Sql show
+        highlight_sql: true    # colorful
+        ddl-auto: none         # Preventing the creation of a new field.
+  # 404 Error
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: debug
+        orm:
+          jdbc:
+            bind: trace       # Parameters show
+    root: INFO
+    com.eventty.userservice: ${level}
+

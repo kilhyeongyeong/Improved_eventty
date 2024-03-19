@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.eventty.businessservice.event.domain.repository.EventDetailRepository">
+
+    <resultMap id="EventDetailResultMap" type="com.eventty.businessservice.event.domain.entity.EventDetailEntity">
+        <id property="id" column="id"/>
+        <result property="content" column="content"/>
+        <result property="applyStartAt" column="apply_start_at"/>
+        <result property="applyEndAt" column="apply_end_at"/>
+        <result property="views" column="views"/>
+        <result property="deleteDate" column="delete_date"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="createDate" column="create_date"/>
+    </resultMap>
+
+    <!-- 이벤트 상세정보 조회 -->
+    <select id="selectEventDetailById" resultMap="EventDetailResultMap" parameterType="java.lang.Long">
+        SELECT *
+        FROM event_details
+        WHERE ID = #{id} AND DELETE_DATE IS NULL
+    </select>
+
+    <!-- 조회수 상위 10개 이벤트 조회 후 id 리스트 반환 -->
+    <select id="selectTop10EventsIdByViews" resultType="java.lang.Long">
+        SELECT id
+        FROM event_details
+        WHERE DELETE_DATE IS NULL
+        ORDER BY views DESC
+        LIMIT 10
+    </select>
+
+    <!-- 최신순 10개 이벤트 조회 후 id 리스트 반환 -->
+    <select id="selectTop10EventsIdByCreateDate" resultType="java.lang.Long">
+        SELECT id
+        FROM event_details
+        WHERE DELETE_DATE IS NULL
+        ORDER BY create_date DESC
+        LIMIT 10
+    </select>
+
+    <!-- 이벤트 마감일 순 10개 이벤트 조회 후 id 리스트 반환 -->
+    <select id="selectTop10EventsIdByApplyEndAt" resultType="java.lang.Long">
+        SELECT id
+        FROM event_details
+        WHERE DELETE_DATE IS NULL
+        ORDER BY apply_end_at DESC
+        LIMIT 10
+    </select>
+
+    <!-- 이벤트 상세정보 생성 -->
+    <insert id="insertEventDetail" parameterType="com.eventty.businessservice.event.domain.entity.EventDetailEntity">
+        INSERT INTO event_details (id, content, apply_start_at, apply_end_at, create_date)
+        VALUES (#{id}, #{content}, #{applyStartAt}, #{applyEndAt}, #{createDate})
+    </insert>
+
+    <!-- 이벤트 상세정보 수정 -->
+    <update id="updateEventDetail" parameterType="com.eventty.businessservice.event.domain.entity.EventDetailEntity">
+        UPDATE event_details
+        SET
+            content = #{content},
+            apply_start_at = #{applyStartAt},
+            apply_end_at = #{applyEndAt}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 이벤트 조회수 증가 -->
+    <update id="updateView" parameterType="java.lang.Long">
+        UPDATE event_details
+        SET views = views + 1
+        WHERE id = #{id}
+    </update>
+
+    <!--이벤트 상세정보 삭제-->
+    <update id="deleteEventDetail" parameterType="java.lang.Long" useGeneratedKeys="true" keyColumn="id">
+        UPDATE event_details
+        SET delete_date = current_timestamp -- 현재 시간으로 업데이트
+        WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,6 @@
+url: jdbc:mysql://db-i9efg-kr.vpc-pub-cdb.ntruss.com:3306/user_dev?useUnicode=true&characterEncoding=UTF-8&characterSetResult=UTF-8&serverTimezone=Asia/Seoul
+adminname: master
+password: eventty!123
+driver-class-name: com.mysql.cj.jdbc.Driver
+
+level: DEBUG

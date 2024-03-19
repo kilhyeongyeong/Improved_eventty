@@ -1,0 +1,101 @@
+server:
+  port: 8001
+
+spring:
+  profiles:
+    active: dev
+  cloud:
+    gateway:
+      routes:
+        - id: user-authorization
+          uri: http://${user_server}:8000/
+          predicates:
+            - Path=/api/user/secret/**
+          filters:
+            - JwtAuthenticationFilter
+            - RewritePath=/api/user/secret/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
+
+        - id: user-not-authorization
+          uri: http://${user_server}:8000/
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - RewritePath=/api/user/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
+
+        - id: event-authorization
+          uri: http://${event_server}:80/
+          predicates:
+            - Path=/api/event/secret/**
+          filters:
+            - JwtAuthenticationFilter
+            - RewritePath=/api/event/secret/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
+
+        - id: event-not-authorization
+          uri: http://${event_server}:80/
+          predicates:
+            - Path=/api/event/**
+          filters:
+            - RewritePath=/api/event/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
+
+        - id: apply-authorization
+          uri: http://${apply_server}:8003/
+          predicates:
+            - Path=/api/apply/secret/**
+          filters:
+            - JwtAuthenticationFilter
+            - RewritePath=/api/apply/secret/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
+
+        - id: apply-not-authorization
+          uri: http://${apply_server}:8003/
+          predicates:
+            - Path=/api/apply/**
+          filters:
+            - RewritePath=/api/apply/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
+
+        - id: auth-server
+          uri: http://${auth_server}:8002/
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth/(?<segment>.*), /$\{segment}
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://${frontend_server}:3000"
+            allowedHeaders:
+              - x-requested-with
+              - authorization
+              - content-type
+              - credential
+              - X-AUTH-TOKEN
+              - X-CSRF-TOKEN
+            allowedMethods:
+              - POST
+              - GET
+              - PUT
+              - OPTIONS
+              - DELETE
+            allowCredentials: true
+
+## JWT
+jwt.secret_key: ${secret_key}
+jwt.issuer: ${issuer}
+
+## SERVER BASE URL
+server.base.url.user_server: ${user_server_url}
+server.base.url.auth_server: ${auth_server_url}
+server.base.url.event_server: ${event_server_url}
+
+## LOG
+logging:
+  level:
+    root: INFO
+    com.eventty.gateway: ${level}
+

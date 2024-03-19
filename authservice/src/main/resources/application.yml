@@ -1,0 +1,65 @@
+# Server
+server:
+  port: 8002
+
+spring:
+  # SECRET
+  profiles:
+    active: dev, oauth2
+  # MYSQL
+  datasource:
+    url: ${url}
+    username: ${adminname}
+    password: ${password}
+    driver-class-name: ${driver-class-name}
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+  # 404 Error
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+  #### h2
+  h2:
+    console:
+      enabled: ${h2}
+
+# LOGGING
+logging:
+  level:
+    org:
+      hibernate:
+        type:
+          descriptor:
+            sql: trace
+    root: INFO
+    com.eventty.authservice: ${level}
+
+
+## SERVER BASE URL
+server.base.url.user_server: ${user-server-url}
+
+## Token
+token.access-expired-time: ${token-access}
+token.refresh-expired-time: ${token-refresh}
+token.issuer: ${issuer}
+token.secret_key: ${secret-key}
+
+## Google
+oauth2.google.client_id: ${google_client_id}
+oauth2.google.client_secret: ${google_client_secret}
+oauth2.google.redirect_url: ${google_rediret_url}
+
+## naver
+oauth2.naver.client_id: ${naver_client_id}
+oauth2.naver.client_secret: ${naver_client_secret}
+oauth2.naver.redirect_url: ${naver_callback_url}
