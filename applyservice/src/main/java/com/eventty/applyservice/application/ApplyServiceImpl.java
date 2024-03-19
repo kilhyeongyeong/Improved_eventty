@@ -52,19 +52,20 @@ public class ApplyServiceImpl implements ApplyService{
     @Async
     @Override
     public void cancelApply(Long applyId) {
-
         // 신청 취소전 유효성 검증
         validateBeforeCancel(applyId);
-        applyReposiroty.deleteApply(applyId);
+
+        applyReposiroty.cancelApply(applyId);
     }
 
     @Override
-    public List<FindAppicaionListResponseDTO> findApplicationList(Long userId) {
+    public List<FindAppicaionListResponseDTO> getApplicationList(Long userId) {
 
-        List<FindByUserIdDTO> applies = applyReposiroty.findByUserId(userId);
+        List<FindByUserIdDTO> applies = applyReposiroty.getApplicationList(userId);
         if(applies.size() == 0 || applies == null)
             return null;
 
+        // Event Server로 부터 화면에 띄울 더 많은 정보 받아오기
         // Event Server로 보내기위한 TicketIds 중복 제거(Parameter 생성)
         Set<String> ticketIds = new HashSet<>();
         for(FindByUserIdDTO apply : applies){
@@ -124,13 +125,13 @@ public class ApplyServiceImpl implements ApplyService{
     }
 
     @Override
-    public List<FindUsingTicketResponseDTO> getUsingTicketList(Long eventId) {
-        return applyReposiroty.findByEventIdGroupByTicket(eventId);
+    public List<FindUsingTicketResponseDTO> getCurrentNumberOfApplicantsByTicket(Long eventId) {
+        return applyReposiroty.getCurrentNumberOfApplicantsByTicket(eventId);
     }
 
     @Override
-    public List<FindApplicantsListResposneDTO> findApplicantsList(FindApplicantsListRequestDTO findApplicantsListRequestDTO) {
-        List<FindApplicantsListDTO> applies = applyReposiroty.findByEventId(findApplicantsListRequestDTO);
+    public List<FindApplicantsListResposneDTO> getApplicantsListByEvent(FindApplicantsListRequestDTO findApplicantsListRequestDTO) {
+        List<FindApplicantsListDTO> applies = applyReposiroty.getApplicantsListByEvent(findApplicantsListRequestDTO);
 
         if(applies.size() == 0 || applies == null) return null;
 
@@ -188,13 +189,13 @@ public class ApplyServiceImpl implements ApplyService{
 
     private void validateBeforeApply(CreateApplyRequestDTO createApplyRequestDTO){
         // 신청 인원수 확인
-        Long count = applyReposiroty.getApplyNum(createApplyRequestDTO.getEventId());
+        Long count = applyReposiroty.getCurrentNumberOfApplicants(createApplyRequestDTO.getEventId());
         if(count != null && createApplyRequestDTO.getQuantity() <= count + createApplyRequestDTO.getApplicantNum())
             throw new ExceedApplicantsException(count + createApplyRequestDTO.getApplicantNum());
     }
 
     private void validateBeforeCancel(Long applyId){
-        Boolean result = applyReposiroty.deleteCheck(applyId);
+        Boolean result = applyReposiroty.CheckCancellationStatus(applyId);
         // 유효하지 않는 appyId
         if(result == null)  throw new NonExistentIdException();
         // 이미 신청 취소한 applyId

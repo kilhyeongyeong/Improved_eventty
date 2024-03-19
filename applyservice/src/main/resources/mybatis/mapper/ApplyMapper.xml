@@ -3,40 +3,41 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.eventty.applyservice.domain.ApplyReposiroty">
-    <!--  현재 신청 인원수 체크  -->
-    <select id="getApplyNum" parameterType="Long" resultType="Long">
-        <!-- Current Apply Num -->
-        SELECT SUM(applicant_num)
-          FROM apply
-         WHERE 1=1
-           AND event_id = #{eventId}
-           AND delete_date IS NULL;
-    </select>
 
     <!--  행사 신청  -->
     <insert id="insertApply" parameterType="com.eventty.applyservice.application.dto.CreateApplyDTO">
         INSERT INTO
-            apply(user_id, event_id, ticket_id, applicant_num, phone, name)
-        VALUES(#{userId}, #{eventId}, #{ticketId}, #{applicantNum}, #{phone}, #{name})
+            apply(id, user_id, event_id, ticket_id, applicant_num, phone, name)
+        VALUES(apply_seq.nextval, #{userId}, #{eventId}, #{ticketId}, #{applicantNum}, #{phone}, #{name})
     </insert>
 
-    <update id="deleteApply" parameterType="Long">
+    <!--  행사 신청 - 현재 신청 인원수 체크  -->
+    <select id="getCurrentNumberOfApplicants" resultType="java.lang.Long">
+        <!-- Current Apply Num -->
+        SELECT SUM(applicant_num)
+        FROM apply
+        WHERE 1=1
+        AND event_id = #{eventId}
+        AND delete_date IS NULL
+    </select>
+
+    <update id="cancelApply" parameterType="Long">
         UPDATE apply
-           SET DELETE_DATE = NOW()
+           SET DELETE_DATE = sysdate
          WHERE id = #{applyId}
     </update>
 
-    <select id="deleteCheck" parameterType="Long" resultType="Boolean">
+    <select id="CheckCancellationStatus" resultType="Boolean">
         SELECT
             CASE
-                WHEN delete_date IS NULL THEN TRUE
-                ELSE FALSE
+                WHEN delete_date IS NULL THEN 1
+                ELSE 0
             END AS result
           FROM apply
          WHERE id = #{applyId}
     </select>
 
-    <select id="findByUserId" parameterType="Long" resultType="com.eventty.applyservice.application.dto.FindByUserIdDTO">
+    <select id="getApplicationList" parameterType="Long" resultType="com.eventty.applyservice.application.dto.FindByUserIdDTO">
         SELECT
             id              AS applyId,
             event_id        AS eventId,
@@ -54,7 +55,7 @@
          ORDER BY recentDate DESC
     </select>
 
-    <select id="findByEventIdGroupByTicket" parameterType="Long" resultType="com.eventty.applyservice.application.dto.response.FindUsingTicketResponseDTO">
+    <select id="getCurrentNumberOfApplicantsByTicket" parameterType="Long" resultType="com.eventty.applyservice.application.dto.response.FindUsingTicketResponseDTO">
         SELECT
             ticket_id AS ticketId,
             SUM(applicant_num) as appliedTicketCount
@@ -65,7 +66,7 @@
          GROUP BY ticket_id
     </select>
 
-    <select id="findByEventId"
+    <select id="getApplicantsListByEvent"
             parameterType="com.eventty.applyservice.application.dto.request.FindApplicantsListRequestDTO"
             resultType="com.eventty.applyservice.application.dto.FindApplicantsListDTO">
         SELECT
@@ -76,7 +77,7 @@
             applicant_num AS applicantNum,
             ticket_id AS ticketId,
             delete_date AS deleteDate,
-            ad.date,
+            ad.delete_or_apply_date,
             CASE
                 WHEN delete_date IS NULL THEN '결제 완료'
                 ELSE '예약 취소'
@@ -87,8 +88,8 @@
                         CASE
                             WHEN delete_date IS NULL THEN apply_date
                             ELSE delete_date
-                        END AS date
-                      FROM apply) AS ad
+                        END AS delete_or_apply_date
+                      FROM apply) ad
            ON ad.id = a.id
         WHERE 1=1
             AND event_id = #{eventId}
@@ -111,13 +112,13 @@
         </if>
         <choose>
             <when test="dateMin != null and dateMax != null">
-                AND ad.date BETWEEN DATE(#{dateMin}) AND DATE(#{dateMax})
+                AND ad.delete_or_apply_date BETWEEN DATE(#{dateMin}) AND DATE(#{dateMax})
             </when>
             <when test="dateMin != null">
-                AND ad.date <![CDATA[>=]]> DATE(#{dateMin})
+                AND ad.delete_or_apply_date <![CDATA[>=]]> DATE(#{dateMin})
             </when>
             <when test="dateMax != null">
-                AND ad.date <![CDATA[<=]]> DATE(#{dateMax})
+                AND ad.delete_or_apply_date <![CDATA[<=]]> DATE(#{dateMax})
             </when>
         </choose>
         <choose>
@@ -125,10 +126,11 @@
                 ORDER BY a.id DESC
             </when>
             <when test="order != null and 1 == order">
-                ORDER BY ad.date
+                ORDER BY ad.delete_or_apply_date
             </when>
         </choose>
     </select>
+
     <select id="countTestCode" resultType="Long">
         select count(*) from apply where user_id = 1000
     </select>

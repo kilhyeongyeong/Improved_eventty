@@ -72,7 +72,7 @@ public class ApplyServiceTest {
                 .quantity(quantity)
                 .name(name)
                 .build();
-        when(applyReposiroty.getApplyNum(anyLong())).thenReturn(2L);
+        when(applyReposiroty.getCurrentNumberOfApplicants(anyLong())).thenReturn(2L);
 
         assertThrows(ExceedApplicantsException.class, () -> applyServiceImpl.createApply(userId, createApplyRequestDTO));
     }
@@ -110,7 +110,7 @@ public class ApplyServiceTest {
     @DisplayName("[Fail - 없는 applyId] 행사 신청 취소")
     public void NonExistentIdExceptionOfCancelApplyTest(){
         Long applyId = 100L;
-        when(applyReposiroty.deleteCheck(anyLong())).thenReturn(null);
+        when(applyReposiroty.CheckCancellationStatus(anyLong())).thenReturn(null);
 
         assertThrows(NonExistentIdException.class, () -> applyServiceImpl.cancelApply(applyId));
     }
@@ -119,7 +119,7 @@ public class ApplyServiceTest {
     @DisplayName("[Fail - 이미 신청 취소된 id] 행사 신청 취소")
     public void AlreadyCancelApplyExceptionOfCancelApplyTest(){
         Long applyId = 2L;
-        when(applyReposiroty.deleteCheck(anyLong())).thenReturn(false);
+        when(applyReposiroty.CheckCancellationStatus(anyLong())).thenReturn(false);
 
         assertThrows(AlreadyCancelApplyException.class, () -> applyServiceImpl.cancelApply(applyId));
     }
@@ -128,20 +128,20 @@ public class ApplyServiceTest {
     @DisplayName("[Success] 행사 신청 취소")
     public void cancelApplySuccessTest(){
         Long applyId = 3L;
-        when(applyReposiroty.deleteCheck(anyLong())).thenReturn(true);
+        when(applyReposiroty.CheckCancellationStatus(anyLong())).thenReturn(true);
 
         applyServiceImpl.cancelApply(applyId);
 
-        verify(applyReposiroty, times(1)).deleteApply(anyLong());
+        verify(applyReposiroty, times(1)).cancelApply(anyLong());
     }
 
     @Test
     @DisplayName("[Success - null] 신청 목록 조회")
     public void findApplicationListNullSuccessTest(){
         Long userId = 2L;
-        when(applyReposiroty.findByUserId(anyLong())).thenReturn(new ArrayList<>());
+        when(applyReposiroty.getApplicationList(anyLong())).thenReturn(new ArrayList<>());
 
-        List<FindAppicaionListResponseDTO> response = applyServiceImpl.findApplicationList(userId);
+        List<FindAppicaionListResponseDTO> response = applyServiceImpl.getApplicationList(userId);
 
         assertNull(response);
     }
@@ -163,7 +163,7 @@ public class ApplyServiceTest {
 
         List<FindByUserIdDTO> findByUserIdDTOList = new ArrayList<>();
         findByUserIdDTOList.add(findByUserIdDTO);
-        when(applyReposiroty.findByUserId(anyLong())).thenReturn(findByUserIdDTOList);
+        when(applyReposiroty.getApplicationList(anyLong())).thenReturn(findByUserIdDTOList);
 
         FindEventInfoResponseDTO eventInfo = FindEventInfoResponseDTO
                 .builder()
@@ -171,7 +171,7 @@ public class ApplyServiceTest {
                 .image("src/src/image.jpg")
                 .title("title1")
                 .ticketName("ticketName")
-                .eventEndAt(LocalDateTime.of(2023, 11, 15, 00, 00))
+                .eventEndAt(LocalDateTime.now().plusMonths(2))
                 .eventId(100L)
                 .ticketId(100L)
                 .build();
@@ -179,25 +179,25 @@ public class ApplyServiceTest {
         eventInfos.add(eventInfo);
         when(apiService.apiRequest()).thenReturn(eventInfos);
 
-        List<FindAppicaionListResponseDTO> response =  applyServiceImpl.findApplicationList(userId);
+        List<FindAppicaionListResponseDTO> response =  applyServiceImpl.getApplicationList(userId);
 
         assertNotNull(response);
         assertEquals("예약 완료", response.get(0).getStatus());
     }
 
     @Test
-    @DisplayName("[API][Success - 0] 현재 예약 개수 조회")
-    public void getUsingTicketListZeroSizeTest(){
+    @DisplayName("[API][Success - 0] 티켓별 현재 신청자 수 조회")
+    public void getCurrentNumberOfApplicantsByTicketZeroSizeTest(){
         Long eventId = 1L;
 
-        when(applyReposiroty.findByEventIdGroupByTicket(anyLong())).thenReturn(new ArrayList<>());
+        when(applyReposiroty.getCurrentNumberOfApplicantsByTicket(anyLong())).thenReturn(new ArrayList<>());
 
-        List<FindUsingTicketResponseDTO> response = applyServiceImpl.getUsingTicketList(eventId);
+        List<FindUsingTicketResponseDTO> response = applyServiceImpl.getCurrentNumberOfApplicantsByTicket(eventId);
         assertEquals(0, response.size());
     }
 
     @Test
-    @DisplayName("[API][Success] 현재 예약 개수 조회")
+    @DisplayName("[API][Success] 티켓별 현재 신청자 수 조회")
     public void getUsingTicketListTest(){
         Long eventId = 1L;
 
@@ -206,18 +206,18 @@ public class ApplyServiceTest {
         result.add(new FindUsingTicketResponseDTO());
         result.add(new FindUsingTicketResponseDTO());
 
-        when(applyReposiroty.findByEventIdGroupByTicket(anyLong())).thenReturn(result);
+        when(applyReposiroty.getCurrentNumberOfApplicantsByTicket(anyLong())).thenReturn(result);
 
-        List<FindUsingTicketResponseDTO> response = applyServiceImpl.getUsingTicketList(eventId);
+        List<FindUsingTicketResponseDTO> response = applyServiceImpl.getCurrentNumberOfApplicantsByTicket(eventId);
         assertEquals(3, response.size());
     }
-    
+
     @Test
     @DisplayName("[Success - null] 주최자 - 이벤트 별 참여자 목록 조회")
     public void findApplicantsListNullTest(){
-        when(applyReposiroty.findByEventId(any())).thenReturn(new ArrayList<>());
+        when(applyReposiroty.getApplicantsListByEvent(any())).thenReturn(new ArrayList<>());
 
-        List<FindApplicantsListResposneDTO> response = applyServiceImpl.findApplicantsList(new FindApplicantsListRequestDTO());
+        List<FindApplicantsListResposneDTO> response = applyServiceImpl.getApplicantsListByEvent(FindApplicantsListRequestDTO.builder().eventId(1L).build());
 
         assertNull(response);
     }
@@ -238,7 +238,7 @@ public class ApplyServiceTest {
                         .userId(3L)
                         .build());
 
-        when(applyReposiroty.findByEventId(any())).thenReturn(findApplicantsListDTOList);
+        when(applyReposiroty.getApplicantsListByEvent(any())).thenReturn(findApplicantsListDTOList);
 
         List<FindEventInfoResponseDTO> findEventInfoResponseDTOList = new ArrayList<>();
         findEventInfoResponseDTOList.add(FindEventInfoResponseDTO
@@ -254,7 +254,7 @@ public class ApplyServiceTest {
         when(apiService.apiRequest()).thenReturn(findEventInfoResponseDTOList);
 
 
-        List<FindApplicantsListResposneDTO> response = applyServiceImpl.findApplicantsList(new FindApplicantsListRequestDTO());
+        List<FindApplicantsListResposneDTO> response = applyServiceImpl.getApplicantsListByEvent(FindApplicantsListRequestDTO.builder().eventId(1L).build());
 
         assertEquals(1, response.size());
     }

@@ -70,26 +70,21 @@ public class ApplyController {
      */
     @GetMapping("/applies")
     @Permission(Roles = {UserRole.USER})
-    public ResponseEntity<SuccessResponseDTO> getApplyList(){
+    public ResponseEntity<SuccessResponseDTO> getApplicationList(){
         Long userId = getUserIdBySecurityContextHolder();
-        List<FindAppicaionListResponseDTO> response = applyService.findApplicationList(userId);
+        List<FindAppicaionListResponseDTO> response = applyService.getApplicationList(userId);
         return ResponseEntity.ok((response == null || response.size() == 0) ? null : SuccessResponseDTO.of(response));
     }
 
     /**
-     * (API)신청 현황(Count) 조회
+     * (API) 티켓별 현재 신청자 현황 조회 - 이벤트 상세조회시 사용
      * @param eventId
      * @return
      */
     @GetMapping("/api/applies/count")
-    public ResponseEntity<SuccessResponseDTO> getTicketCount(@RequestParam Long eventId) {
-        List<FindUsingTicketResponseDTO> responses = applyService.getUsingTicketList(eventId);
-        log.error("현재 신청자 현황 Response : {}", responses);
+    public ResponseEntity<SuccessResponseDTO> getCurrentNumberOfApplicantsByTicket(@RequestParam Long eventId) {
+        List<FindUsingTicketResponseDTO> responses = applyService.getCurrentNumberOfApplicantsByTicket(eventId);
         return ResponseEntity.ok(SuccessResponseDTO.of(responses));
-    }
-
-    private Long getUserIdBySecurityContextHolder(){
-        return Long.parseLong(UserContextHolder.getContext().getUserId());
     }
 
     /**
@@ -98,8 +93,12 @@ public class ApplyController {
      * @return
      */
     @GetMapping("/applies/host")
-    public ResponseEntity<SuccessResponseDTO> getApplicantsList(FindApplicantsListRequestDTO findApplicantsListRequestDTO){
-        List<FindApplicantsListResposneDTO> response = applyService.findApplicantsList(findApplicantsListRequestDTO);
+    public ResponseEntity<SuccessResponseDTO> getApplicantsListByEvent(FindApplicantsListRequestDTO findApplicantsListRequestDTO){
+        List<FindApplicantsListResposneDTO> response = applyService.getApplicantsListByEvent(findApplicantsListRequestDTO);
         return ResponseEntity.ok(response == null || response.size() == 0 ? null : SuccessResponseDTO.of(response));
+    }
+
+    private Long getUserIdBySecurityContextHolder(){
+        return Long.parseLong(UserContextHolder.getContext().getUserId());
     }
 }
