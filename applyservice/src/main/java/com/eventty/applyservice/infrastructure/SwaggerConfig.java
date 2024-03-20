@@ -1,19 +1,19 @@
 package com.eventty.applyservice.infrastructure;
 
 import com.eventty.applyservice.domain.annotation.ApiErrorCode;
-import com.eventty.applyservice.domain.annotation.ApiSuccessData;
 import com.eventty.applyservice.domain.code.ErrorCode;
 import com.eventty.applyservice.presentation.dto.ErrorResponseDTO;
 import com.eventty.applyservice.presentation.dto.ResponseDTO;
-import com.eventty.applyservice.presentation.dto.SuccessResponseDTO;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Configuration
@@ -34,10 +35,17 @@ public class SwaggerConfig {
     private final String VERSION = "v0.0.1";
 
     // 제목
-    private final String TITLE = "\"USER SERVER API 명세서\"";
+    private final String TITLE = "\"Apply SERVER API 명세서\"";
 
     // 제목 밑에 들어갈 설명
-    private final String DESCRIPTION = "EVENTTY - USER SERVER API 명세서 입니다. \n회원에 관련된 정보만 담겨 있습니다.";
+    private final String DESCRIPTION = "EVENTTY - Apply SERVER API 명세서 입니다. \n행사 신청에 관련된 정보만 담겨 있습니다.";
+
+    // HTTP Success Code
+    private final String[] httpSuccessCodes = {"200", "201"};
+
+    // Apiresponse가 있을 경우 매핑될 필드
+    private static ApiResponse apiResponse = null;
+    private static String state = null;
 
     /**
      * Swagger API 설정
@@ -48,13 +56,14 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .components(new Components())
-                .info(swaggerInfo());
+                .info(swaggerInfo())
+                .paths(new Paths());
     }
 
     // Swagger title, version등 화면에 출력될 기본정보 setting
     private Info swaggerInfo() {
         License license = new License();
-        license.setUrl("https://github.com/jeongbeomSeo/eventty");
+        license.setUrl("https://github.com/kilhyeongyeong/Improved_eventty");
         license.setName("eventty");
 
         return new Info()
@@ -72,14 +81,12 @@ public class SwaggerConfig {
         return (Operation operation, HandlerMethod handlerMethod) -> {
             // 커스텀 어노테이션 값 불러오기
             ApiErrorCode apiErrorCode = handlerMethod.getMethodAnnotation(ApiErrorCode.class);
-            ApiSuccessData apiSuccessData = handlerMethod.getMethodAnnotation(ApiSuccessData.class);
 
             // 전처리
-            operation.setResponses(new ApiResponses());
+            preprocessing(operation);
 
-            // @ApiSuccessData가 있을 경우 실행
-            if (apiSuccessData != null){
-                generateSucessResponseDoc(operation, apiSuccessData);
+            if(apiResponse != null){
+                generateSucessResponseDoc(operation);
             }
 
             // @ApiErrorCode가 있을 경우 실행
@@ -90,40 +97,62 @@ public class SwaggerConfig {
             return operation;
         };
     }
+    
+    private void preprocessing(Operation operation){
+        
+        // Success response를 위한 전처리
+        ApiResponses apiResponses = operation.getResponses();
+        for(String key : httpSuccessCodes){
+            if(apiResponses.get(key) != null){
+                state = key;
+                apiResponse = apiResponses.get(key);
+                break;
+            }
+        }
+        
+        // Delete도 Custom을 사용하기 때문에 전체 삭제
+        operation.setResponses(new ApiResponses());
+    }
 
     /**
-     * DTO.class를 기반으로한 성공 응답 예시 문서화
+     * 기본 Annotation 기반의 Success Response 문서화
      * @param operation
-     * @param apiSuccessData
      * @param <T>
      */
-    private <T> void generateSucessResponseDoc(Operation operation, ApiSuccessData apiSuccessData){
-        Class<?> responseDTO = apiSuccessData.value();
-        String status = apiSuccessData.stateCode();
-
-        //-----------------------------------------------------generateInstance
+    private <T> void generateSucessResponseDoc(Operation operation){
         ApiResponses responses = operation.getResponses();
         ApiResponse response = new ApiResponse();
+
+
         Content content = new Content();
         MediaType mediaType = new MediaType();
-        Example successExample = new Example();
 
-        //-----------------------------------------------------settingInstance
+        Schema isSuccessSchema = new Schema();
+        isSuccessSchema.setType("boolean");
+
+        Map<String, Schema> successResponseProperties = new HashMap<>();
+        Map<String, Schema> responseProperties = new HashMap<>();
+
         try{
-            if(apiSuccessData.isArray())
-                successExample.setValue(ResponseDTO.of(SuccessResponseDTO.of(List.of(responseDTO.getConstructor().newInstance()))));
-            else
-                successExample.setValue(ResponseDTO.of(SuccessResponseDTO.of(responseDTO.getConstructor().newInstance())));
-        }catch(Exception e) {
-            successExample.setValue(new ResponseDTO());
+            successResponseProperties.put("data", apiResponse.getContent().get("application/json").getSchema());
+            Schema sucessResponseSchema = new Schema();
+            sucessResponseSchema.properties(successResponseProperties);
+            responseProperties.put("SuccessResponseDTO", sucessResponseSchema);
+        }catch (Exception e){
+            // 건너뛰기
         }
 
-        mediaType.addExamples("ResponseDTO", successExample);
+        responseProperties.put("isSuccess", isSuccessSchema);
 
-        response.setDescription(HttpStatus.valueOf(Integer.parseInt(status)).toString());
+        Schema responseSchema = new Schema();
+        responseSchema.properties(responseProperties);
+
+        mediaType.schema(responseSchema);
+
+        response.setDescription(apiResponse.getDescription());
         response.setContent(content.addMediaType("application/json", mediaType));
 
-        responses.addApiResponse(status, response);
+        responses.addApiResponse(state, response);
         operation.setResponses(responses);
     }
 
