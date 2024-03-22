@@ -1,6 +1,7 @@
-package com.eventty.applyservice.infrastructure;
+package com.eventty.applyservice.presentation;
 
 import com.eventty.applyservice.domain.annotation.ApiErrorCode;
+import com.eventty.applyservice.domain.annotation.ApiSuccessData;
 import com.eventty.applyservice.domain.code.ErrorCode;
 import com.eventty.applyservice.presentation.dto.ErrorResponseDTO;
 import com.eventty.applyservice.presentation.dto.ResponseDTO;
@@ -47,6 +48,8 @@ public class SwaggerConfig {
     private static ApiResponse apiResponse = null;
     private static String state = null;
 
+    private io.swagger.v3.oas.annotations.media.Content[] contents = {};
+
     /**
      * Swagger API 설정
      * @param
@@ -73,6 +76,7 @@ public class SwaggerConfig {
                 .license(license);
     }
     // ----------------------------------------------------------------
+
     /**
      * 커스텀 어노테이션 적용
      */
@@ -81,13 +85,22 @@ public class SwaggerConfig {
         return (Operation operation, HandlerMethod handlerMethod) -> {
             // 커스텀 어노테이션 값 불러오기
             ApiErrorCode apiErrorCode = handlerMethod.getMethodAnnotation(ApiErrorCode.class);
+            ApiSuccessData apiSuccessData = handlerMethod.getMethodAnnotation(ApiSuccessData.class);
 
-            // 전처리
+            io.swagger.v3.oas.annotations.media.Schema schema = apiSuccessData.schema();
+
+
+            //전처리
             preprocessing(operation);
+
+            if(apiSuccessData != null){
+                generateSucessResponseDoc(apiSuccessData);
+            }
 
             if(apiResponse != null){
                 generateSucessResponseDoc(operation);
             }
+
 
             // @ApiErrorCode가 있을 경우 실행
             if (apiErrorCode != null) {
@@ -96,6 +109,10 @@ public class SwaggerConfig {
 
             return operation;
         };
+    }
+
+    private void generateSucessResponseDoc(ApiSuccessData apiSuccessData){
+
     }
     
     private void preprocessing(Operation operation){
@@ -119,10 +136,9 @@ public class SwaggerConfig {
      * @param operation
      * @param <T>
      */
-    private <T> void generateSucessResponseDoc(Operation operation){
+    private <T> void generateSucessResponseDoc(Operation operation/*, ApiSuccessData apiSuccessData*/){
         ApiResponses responses = operation.getResponses();
         ApiResponse response = new ApiResponse();
-
 
         Content content = new Content();
         MediaType mediaType = new MediaType();
@@ -134,7 +150,15 @@ public class SwaggerConfig {
         Map<String, Schema> responseProperties = new HashMap<>();
 
         try{
+//            Schema testSchema1 = new Schema();
+//            testSchema1.$ref("#components/schemas/FindUsingTicketResponseDTO");
+//
+//            Schema testSchema2 = new Schema();
+//            testSchema2.$ref("#schemas/FindUsingTicketResponseDTO");
+
             successResponseProperties.put("data", apiResponse.getContent().get("application/json").getSchema());
+//            successResponseProperties.put("data", testSchema1);
+//            successResponseProperties.put("data", testSchema2);
             Schema sucessResponseSchema = new Schema();
             sucessResponseSchema.properties(successResponseProperties);
             responseProperties.put("SuccessResponseDTO", sucessResponseSchema);
